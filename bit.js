@@ -1,4 +1,4 @@
-const log = require("debug")("pewpew:bit");
+const log = require("debug")("powpow:bit");
 
 import fs from "fs"
 import path from "path"

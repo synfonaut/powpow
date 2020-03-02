@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 'use strict';
 
 function _interopDefault (ex) { return (ex && (typeof ex === 'object') && 'default' in ex) ? ex['default'] : ex; }
@@ -47,7 +46,7 @@ function sendtx(txhash) {
     });
 }
 
-const log = require("debug")("pewpew:utxos");
+const log = require("debug")("powpow:utxos");
 
 const bitindex = require('bitindex-sdk').instance();
 
@@ -71,10 +70,16 @@ async function fireForUTXO(privateKey, utxo, changeAddress, satoshis, target) {
     if (!changeAddress) { throw new Error(`shooter requires a change address`) }
     if (!Number.isInteger(satoshis)) { throw new Error(`shooter requires an amount`) }
 
+    const script = bsv$1.Script.fromASM("21e80096c21e2de52d741ac27607e251770c0b9f7e644f684cf37173e871820e 21e8 OP_SIZE OP_4 OP_PICK OP_SHA256 OP_SWAP OP_SPLIT OP_DROP OP_EQUALVERIFY OP_DROP OP_CHECKSIG");
+
     const tx = bsv$1.Transaction()
         .from([utxo])
         .to(target, satoshis)
-        .change(changeAddress);
+        .change(changeAddress)
+        .add(bsv$1.Transaction.Output({
+            script,
+            satoshis,
+        }));
 
     tx.sign(privateKey);
 
@@ -85,15 +90,12 @@ async function fireForUTXO(privateKey, utxo, changeAddress, satoshis, target) {
 
     const txhash = tx.serialize();
 
+    console.log("TXHASH", txhash);
+
+    throw new Error("SILENCE WEAPONS");
+
     //const result = await bitindex.tx.send(txhash);
     const result = await sendtx(txhash);
-
-    if (result.error) {
-        console.log("error while sending tx for utxo", utxo);
-        throw new Error(`error while sending tx ${result.error}`);
-    }
-
-    return result.result;
 }
 
 async function fire(wif, num, satoshis, target, backend) {
@@ -138,7 +140,7 @@ async function fire(wif, num, satoshis, target, backend) {
 
 Object.fromEntries = arr => Object.assign({}, ...Array.from(arr, ([k, v]) => ({[k]: v}) ));
 
-const log$1 = require("debug")("pewpew:bit");
+const log$1 = require("debug")("powpow:bit");
 
 // fetch and generate new .bit files
 async function generate(file=".bit") {
@@ -443,17 +445,17 @@ class BitworkBackend extends Backend {
 
 }
 
-const log$2 = require("debug")("pewpew");
+const log$2 = require("debug")("powpow");
 
 const readline = require("readline");
 
 program.on('--help', function(){
   console.log('');
   console.log('Usage:');
-  console.log('  $ pewpew generate');
-  console.log('  $ pewpew address');
-  console.log('  $ pewpew split');
-  console.log('  $ pewpew fire 1Jpgfg9fFNKVVGxYgUhuKhdbxTSKBUnVf4');
+  console.log('  $ powpow generate');
+  console.log('  $ powpow address');
+  console.log('  $ powpow split');
+  console.log('  $ powpow fire 1Jpgfg9fFNKVVGxYgUhuKhdbxTSKBUnVf4');
   console.log('');
 });
 

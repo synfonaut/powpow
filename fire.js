@@ -5,17 +5,23 @@ import { utxos as getutxos } from "./utxos"
 import bsv from "bsv";
 const bitindex = require('bitindex-sdk').instance();
 
-async function fireForUTXO(privateKey, utxo, changeAddress, satoshis, target) {
+async function fireForUTXO(privateKey, utxo, changeAddress, satoshis, hash, target) {
     if (!privateKey) { throw new Error(`shooter requires a privateKey`) }
     if (!utxo) { throw new Error(`shooter requires a utxo`) }
+    if (!hash) { throw new Error(`shooter requires a hash`) }
     if (!target) { throw new Error(`shooter requires a target`) }
     if (!changeAddress) { throw new Error(`shooter requires a change address`) }
     if (!Number.isInteger(satoshis)) { throw new Error(`shooter requires an amount`) }
 
+    const script = bsv.Script.fromASM(`${hash} ${target} OP_SIZE OP_4 OP_PICK OP_SHA256 OP_SWAP OP_SPLIT OP_DROP OP_EQUALVERIFY OP_DROP OP_CHECKSIG`);
+
     const tx = bsv.Transaction()
         .from([utxo])
-        .to(target, satoshis)
-        .change(changeAddress);
+        .change(changeAddress)
+        .addOutput(bsv.Transaction.Output({
+            script: script.toHex(),
+            satoshis: (satoshis - 200), // how much should fee be?
+        }));
 
     tx.sign(privateKey);
 
@@ -24,8 +30,9 @@ async function fireForUTXO(privateKey, utxo, changeAddress, satoshis, target) {
         throw new Error(`error while verifying tx`);
     }
 
-    const txhash = tx.serialize();
+    const txhash = tx.uncheckedSerialize();
 
+    //console.log(txhash);
     //const result = await bitindex.tx.send(txhash);
     const result = await sendtx(txhash);
 
@@ -37,9 +44,10 @@ async function fireForUTXO(privateKey, utxo, changeAddress, satoshis, target) {
     return result.result;
 }
 
-export async function fire(wif, num, satoshis, target, backend) {
+export async function fire(wif, num, satoshis, hash, target, backend) {
     console.log("starting transaction shooter");
     if (!wif) { throw new Error(`shooter requires a wif`) }
+    if (!hash) { throw new Error(`shooter requires a hash`) }
     if (!target) { throw new Error(`shooter requires a target`) }
     if (!Number.isInteger(num)) { throw new Error(`shooter requires a num`) }
     if (!Number.isInteger(satoshis)) { throw new Error(`shooter requires an amount`) }
@@ -60,7 +68,7 @@ export async function fire(wif, num, satoshis, target, backend) {
     let curr = 0;
     console.log("aim");
     for (const utxo of utxos) {
-        const txid = await fireForUTXO(privateKey, utxo, address, satoshis, target);
+        const txid = await fireForUTXO(privateKey, utxo, address, satoshis, hash, target);
         if (!txid) { throw new Error(`error firing tx to target`) }
 
         backend.add(txid);

@@ -4,7 +4,7 @@
   "description": "A Bitcoin proof-of-work transaction shooter",
   "main": "index.js",
   "bin": {
-    "pewpew": "./bundle.js"
+    "powpow": "./bundle.js"
   },
   "scripts": {
     "build": "./node_modules/.bin/rollup cli.js --file bundle.js --format cjs && chmod +x bundle.js"
@@ -17,11 +17,12 @@
   "author": "synfonaut",
   "license": "LICENSE.md",
   "peerDependencies": {
-    "bsv": "^1.0.0"
+    "bsv": "^1.3.0"
   },
   "dependencies": {
     "bitindex-sdk": "3.3.1",
     "bitwork": "synfonaut/bitwork",
+    "bsv": "1.3.0",
     "bsv-p2p": "deanmlittle/bsv-p2p",
     "commander": "4.0.1",
     "debug": "4.1.1",

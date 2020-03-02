@@ -1,6 +1,6 @@
 import bsv from "bsv";
 
-const log = require("debug")("pewpew:utxos");
+const log = require("debug")("powpow:utxos");
 
 const bitindex = require('bitindex-sdk').instance();
 

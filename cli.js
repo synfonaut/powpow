@@ -1,4 +1,4 @@
-const log = require("debug")("pewpew");
+const log = require("debug")("powpow");
 
 import qrcode from "qrcode-terminal"
 import program from "commander"
@@ -16,10 +16,10 @@ import { B2P2PBackend, BitworkBackend } from "./backends"
 program.on('--help', function(){
   console.log('')
   console.log('Usage:');
-  console.log('  $ pewpew generate');
-  console.log('  $ pewpew address');
-  console.log('  $ pewpew split');
-  console.log('  $ pewpew fire 1Jpgfg9fFNKVVGxYgUhuKhdbxTSKBUnVf4');
+  console.log('  $ powpow generate');
+  console.log('  $ powpow address');
+  console.log('  $ powpow split');
+  console.log('  $ powpow fire 1Jpgfg9fFNKVVGxYgUhuKhdbxTSKBUnVf4');
   console.log('')
 });
 
@@ -140,10 +140,10 @@ program
     });
 
 program
-    .command("fire <address> [number]")
+    .command("fire <sha256 hash> <target> [number]")
     .option("-s, --satoshis <satoshis>", "Change the number of satoshis to send, by default 800")
     .description("Fire Pew Pew, sending num Bitcoin transactions to an address")
-    .action(async function(address, number, args) {
+    .action(async function(hash, target, number, args) {
         let bundle = await bit.fetch();
         if (!bundle) {
             log(`error finding address information, please inspect you .bit file`);
@@ -151,8 +151,14 @@ program
         }
 
         const satoshis = (args.satoshis ? Number(args.satoshis) : 800);
-        if (!address) {
-            console.log(`ERROR invalid address`);
+        console.log("HASH", hash, hash.length);
+        if (!hash || hash.length !== 64) {
+            console.log(`ERROR invalid hash ${hash}`);
+            process.exit();
+        }
+
+        if (!target) {
+            console.log(`ERROR invalid target`);
             process.exit();
         }
 
@@ -162,7 +168,8 @@ program
         console.log("===================================================");
         console.log("⚠️  WARNING ⚠️");
         console.log(`\nAre you sure you want to FIRE at`);
-        console.log(`ADDRESS: ${address}`);
+        console.log(`HASH: ${hash}`);
+        console.log(`TARGET: ${target}`);
         console.log(`NUMBER: ${num}`);
         console.log(`SATOSHIS: ${satoshis}`);
         console.log(`TOTAL SATOSHIS: ${num * satoshis}`);
@@ -176,7 +183,7 @@ program
                 const backend = new BitworkBackend();
                 backend.ready = function() {
                     console.log("ready");
-                    fire(bundle.PRIVATE, num, satoshis, address, backend).catch(e => {
+                    fire(bundle.PRIVATE, num, satoshis, hash, target, backend).catch(e => {
                         console.log(`ERROR while firing transactions`);
                         console.log(e);
                     });
