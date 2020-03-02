@@ -8,14 +8,14 @@ Pow Pow currently requires a Bitcoin node.
 
 ## Install
 
-    npm install powpow-bitcoin
+    npm install -g powpow-bitcoin
 
 ## Setup
 
 First generate the keys in a secure location
 
-    mkdir shooter-keys
-    cd shooter-keys
+    mkdir powerful
+    cd powerful
 
     powpow generate
 
@@ -43,16 +43,16 @@ Split large utxos into many smaller utxos
     Usage:  [options] [command]
 
     Options:
-      -V, --version                      output the version number
-      -h, --help                         output usage information
+      -V, --version                            output the version number
+      -h, --help                               output usage information
 
     Commands:
-      generate                           Generate address
-      address                            Display address
-      balance                            Display balance for address
-      utxos                              Display utxos for address
-      split [options]                    Split utxos in preparation for firing
-      fire [options] <address> [number]  Fire Pow Pow, sending num Bitcoin transactions to an address
+      generate                                 Generate address
+      address                                  Display address
+      balance                                  Display balance for address
+      utxos                                    Display utxos for address
+      split [options]                          Split utxos in preparation for firing
+      fire [options] <hash> <target> [number]  Fire Pow Pow, sending `target` worth of proof-of-work to `hash`
 
     Usage:
       $ powpow generate
