@@ -9,7 +9,7 @@ var RPCClient = _interopDefault(require('bitcoind-rpc'));
 var bsv$1 = _interopDefault(require('bsv'));
 var fs = _interopDefault(require('fs'));
 var path = _interopDefault(require('path'));
-require('b2p2p');
+require('bsv-p2p');
 var bitwork = _interopDefault(require('bitwork'));
 require('txo');
 

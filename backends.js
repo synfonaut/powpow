@@ -1,6 +1,6 @@
 import config from "./config"
 
-import { Peer, Messages, Inventory } from "b2p2p"
+import { Peer, Messages, Inventory } from "bsv-p2p"
 import bitwork from "bitwork"
 import bsv from "bsv"
 import txo from "txo"

@@ -20,11 +20,13 @@
     "bsv": "^1.0.0"
   },
   "dependencies": {
-    "b2p2p": "0.0.1",
     "bitindex-sdk": "3.3.1",
     "bitwork": "synfonaut/bitwork",
+    "bsv-p2p": "deanmlittle/bsv-p2p",
     "commander": "4.0.1",
     "debug": "4.1.1",
+    "esm": "3.2.25",
+    "lodash": "4.17.15",
     "qrcode-terminal": "0.12.0"
   },
   "devDependencies": {
