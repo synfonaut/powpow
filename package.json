@@ -1,10 +1,10 @@
 {
-  "name": "pewpew-bitcoin",
-  "version": "0.1.4",
-  "description": "A Bitcoin SV transaction shooter",
+  "name": "powpow-bitcoin",
+  "version": "0.0.1",
+  "description": "A Bitcoin proof-of-work transaction shooter",
   "main": "index.js",
   "bin": {
-      "pewpew": "./bundle.js"
+    "pewpew": "./bundle.js"
   },
   "scripts": {
     "build": "./node_modules/.bin/rollup cli.js --file bundle.js --format cjs && chmod +x bundle.js"
