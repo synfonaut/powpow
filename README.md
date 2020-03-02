@@ -1,16 +1,14 @@
-# Pew Pew
+# Pow Pow
 
-![Pew Pew — A Bitcoin SV Transaction Shooter](https://github.com/synfonaut/pewpew/raw/master/pewpew.png)
+Pow Pow is a Bitcoin proof-of-work shooter, it quickly sends a lot of proof-of-work transactions to the Bitcoin SV blockchain.
 
-Pew Pew is a Bitcoin SV transaction shooter, it quickly sends a lot of transactions to a Bitcoin SV address.
+It's useful for stress testing and debugging realtime Bitcoin proof-of-work applications.
 
-It's useful for stress testing and debugging realtime Bitcoin applications.
-
-Pew Pew currently requires a Bitcoin node.
+Pow Pow currently requires a Bitcoin node.
 
 ## Install
 
-    npm install pewpew-bitcoin
+    npm install powpow-bitcoin
 
 ## Setup
 
@@ -19,25 +17,25 @@ First generate the keys in a secure location
     mkdir shooter-keys
     cd shooter-keys
 
-    pewpew generate
+    powpow generate
 
 
 Fund the address that appears on screen. If you ever need to refer back to this address, run
 
-    pewpew address
+    powpow address
 
 
 Check your balance
 
-    pewpew balance
+    powpow balance
 
 Split large utxos into many smaller utxos
 
-    pewpew split
+    powpow split
 
-🔫 Fire Pew Pew!
+💥 Fire Pow Pow!
 
-    pewpew fire 1Jpgfg9fFNKVVGxYgUhuKhdbxTSKBUnVf4
+    powpow fire 1Jpgfg9fFNKVVGxYgUhuKhdbxTSKBUnVf4
 
 
 ## Help
@@ -54,13 +52,13 @@ Split large utxos into many smaller utxos
       balance                            Display balance for address
       utxos                              Display utxos for address
       split [options]                    Split utxos in preparation for firing
-      fire [options] <address> [number]  Fire Pew Pew, sending num Bitcoin transactions to an address
+      fire [options] <address> [number]  Fire Pow Pow, sending num Bitcoin transactions to an address
 
     Usage:
-      $ pewpew generate
-      $ pewpew address
-      $ pewpew split
-      $ pewpew fire 1Jpgfg9fFNKVVGxYgUhuKhdbxTSKBUnVf4
+      $ powpow generate
+      $ powpow address
+      $ powpow split
+      $ powpow fire 1Jpgfg9fFNKVVGxYgUhuKhdbxTSKBUnVf4
 
 
 ## Frequently Asked Questions
@@ -73,19 +71,19 @@ Your private key is generated on a .bit file in your local directory. If you put
 
 Use the environment variables below to change the node information
 
-    RPC_HOST=127.0.0.1 RPC_USER=root RPC_PASS=bitcoin PEER_HOST=127.0.0.1 pewpew fire 1Jpgfg9fFNKVVGxYgUhuKhdbxTSKBUnVf4
+    RPC_HOST=127.0.0.1 RPC_USER=root RPC_PASS=bitcoin PEER_HOST=127.0.0.1 powpow fire 1Jpgfg9fFNKVVGxYgUhuKhdbxTSKBUnVf4
 
 ### How do I change the number of transactions I'm sending?
 
 Specify the number after the address
 
-    pewpew fire 1Jpgfg9fFNKVVGxYgUhuKhdbxTSKBUnVf4 20
+    powpow fire 1Jpgfg9fFNKVVGxYgUhuKhdbxTSKBUnVf4 20
 
 ### How do I change the amount of satoshis I'm sending?
 
 Specify the --satoshis flag
 
-    pewpew fire --satoshis 600 1Jpgfg9fFNKVVGxYgUhuKhdbxTSKBUnVf4
+    powpow fire --satoshis 600 1Jpgfg9fFNKVVGxYgUhuKhdbxTSKBUnVf4
 
 ### Why are my transactions getting rejected?
 
@@ -101,5 +99,5 @@ Probably because the fee is too low, try sending a lower satoshi amount.
 
 ## Author
 
-Created by [@synfonaut](https://twitter.com/synfonaut) while building [Bit.sv](https://bit.sv).
+Created by [@synfonaut](https://twitter.com/synfonaut) while building [Bit.sv](https://bit.sv) and [pow.market](https://pow.market).
 
