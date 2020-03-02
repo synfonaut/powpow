@@ -63,22 +63,22 @@ async function utxos(address) {
 
 const bitindex$1 = require('bitindex-sdk').instance();
 
-async function fireForUTXO(privateKey, utxo, changeAddress, satoshis, target) {
+async function fireForUTXO(privateKey, utxo, changeAddress, satoshis, hash, target) {
     if (!privateKey) { throw new Error(`shooter requires a privateKey`) }
     if (!utxo) { throw new Error(`shooter requires a utxo`) }
+    if (!hash) { throw new Error(`shooter requires a hash`) }
     if (!target) { throw new Error(`shooter requires a target`) }
     if (!changeAddress) { throw new Error(`shooter requires a change address`) }
     if (!Number.isInteger(satoshis)) { throw new Error(`shooter requires an amount`) }
 
-    const script = bsv$1.Script.fromASM("21e80096c21e2de52d741ac27607e251770c0b9f7e644f684cf37173e871820e 21e8 OP_SIZE OP_4 OP_PICK OP_SHA256 OP_SWAP OP_SPLIT OP_DROP OP_EQUALVERIFY OP_DROP OP_CHECKSIG");
+    const script = bsv$1.Script.fromASM(`${hash} ${target} OP_SIZE OP_4 OP_PICK OP_SHA256 OP_SWAP OP_SPLIT OP_DROP OP_EQUALVERIFY OP_DROP OP_CHECKSIG`);
 
     const tx = bsv$1.Transaction()
         .from([utxo])
-        .to(target, satoshis)
         .change(changeAddress)
-        .add(bsv$1.Transaction.Output({
-            script,
-            satoshis,
+        .addOutput(bsv$1.Transaction.Output({
+            script: script.toHex(),
+            satoshis: (satoshis - 200), // how much should fee be?
         }));
 
     tx.sign(privateKey);
@@ -88,19 +88,24 @@ async function fireForUTXO(privateKey, utxo, changeAddress, satoshis, target) {
         throw new Error(`error while verifying tx`);
     }
 
-    const txhash = tx.serialize();
+    const txhash = tx.uncheckedSerialize();
 
-    console.log("TXHASH", txhash);
-
-    throw new Error("SILENCE WEAPONS");
-
+    //console.log(txhash);
     //const result = await bitindex.tx.send(txhash);
     const result = await sendtx(txhash);
+
+    if (result.error) {
+        console.log("error while sending tx for utxo", utxo);
+        throw new Error(`error while sending tx ${result.error}`);
+    }
+
+    return result.result;
 }
 
-async function fire(wif, num, satoshis, target, backend) {
+async function fire(wif, num, satoshis, hash, target, backend) {
     console.log("starting transaction shooter");
     if (!wif) { throw new Error(`shooter requires a wif`) }
+    if (!hash) { throw new Error(`shooter requires a hash`) }
     if (!target) { throw new Error(`shooter requires a target`) }
     if (!Number.isInteger(num)) { throw new Error(`shooter requires a num`) }
     if (!Number.isInteger(satoshis)) { throw new Error(`shooter requires an amount`) }
@@ -121,7 +126,7 @@ async function fire(wif, num, satoshis, target, backend) {
     let curr = 0;
     console.log("aim");
     for (const utxo of utxos$1) {
-        const txid = await fireForUTXO(privateKey, utxo, address, satoshis, target);
+        const txid = await fireForUTXO(privateKey, utxo, address, satoshis, hash, target);
         if (!txid) { throw new Error(`error firing tx to target`) }
 
         backend.add(txid);
@@ -576,10 +581,10 @@ program
     });
 
 program
-    .command("fire <address> [number]")
+    .command("fire <sha256 hash> <target> [number]")
     .option("-s, --satoshis <satoshis>", "Change the number of satoshis to send, by default 800")
     .description("Fire Pew Pew, sending num Bitcoin transactions to an address")
-    .action(async function(address, number, args) {
+    .action(async function(hash, target, number, args) {
         let bundle = await fetch();
         if (!bundle) {
             log$2(`error finding address information, please inspect you .bit file`);
@@ -587,8 +592,14 @@ program
         }
 
         const satoshis = (args.satoshis ? Number(args.satoshis) : 800);
-        if (!address) {
-            console.log(`ERROR invalid address`);
+        console.log("HASH", hash, hash.length);
+        if (!hash || hash.length !== 64) {
+            console.log(`ERROR invalid hash ${hash}`);
+            process.exit();
+        }
+
+        if (!target) {
+            console.log(`ERROR invalid target`);
             process.exit();
         }
 
@@ -598,7 +609,8 @@ program
         console.log("===================================================");
         console.log("⚠️  WARNING ⚠️");
         console.log(`\nAre you sure you want to FIRE at`);
-        console.log(`ADDRESS: ${address}`);
+        console.log(`HASH: ${hash}`);
+        console.log(`TARGET: ${target}`);
         console.log(`NUMBER: ${num}`);
         console.log(`SATOSHIS: ${satoshis}`);
         console.log(`TOTAL SATOSHIS: ${num * satoshis}`);
@@ -612,7 +624,7 @@ program
                 const backend = new BitworkBackend();
                 backend.ready = function() {
                     console.log("ready");
-                    fire(bundle.PRIVATE, num, satoshis, address, backend).catch(e => {
+                    fire(bundle.PRIVATE, num, satoshis, hash, target, backend).catch(e => {
                         console.log(`ERROR while firing transactions`);
                         console.log(e);
                     });
