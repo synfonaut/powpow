@@ -24,7 +24,7 @@ function sendtx(txhash) {
                 reject(null);
             }
         }).catch(e => {
-            log(`error while sending txhash ${txhash}, error ${e.message}`);
+            log(`error while sending txhash ${txhash}, error ${e.message} / ${e.response.data}`);
             reject(null);
         });
     });
@@ -297,23 +297,24 @@ async function splitUTXO(privateKey, utxo, changeAddress, num, satoshis) {
         console.log(`unable to split ${utxo.txid}:${utxo.vout}`);
         return 0;
     }
+
     tx.sign(privateKey);
 
     const txhash = tx.serialize();
 
-    const result = await sendtx(txhash);
+    const txid = await sendtx(txhash);
 
-    if (result.error) {
+    if (!txid) {
         console.log("error while sending tx for utxo", utxo);
-        throw new Error(`error while sending tx ${result.error}`);
+        throw new Error(`error while sending tx ${txid}`);
     }
 
-    console.log("SPLIT", `${utxo.txid}:${utxo.vout} into`, numsplit, "utxos in", result.result);
-    return result.result;
+    console.log("SPLIT", `${utxo.txid}:${utxo.vout} into`, numsplit, "utxos in", txid);
+    return txid;
 }
 
 
-async function split(wif, num, satoshis, maxoutputs=25) {
+async function split(wif, num, satoshis) {
     console.log("preparing transaction shooter by splitting utxos");
 
     if (!wif) { throw new Error(`shooter requires a wif`) }
@@ -333,7 +334,7 @@ async function split(wif, num, satoshis, maxoutputs=25) {
 
     let split = 0;
     for (const utxo of utxos) {
-        const numsplit = await splitUTXO(privateKey, utxo, address, maxoutputs, satoshis);
+        const numsplit = await splitUTXO(privateKey, utxo, address, num, satoshis);
         if (numsplit > 0) {
             console.log(`SPLIT ${numsplit} utxos from ${utxo.txid}:${utxo.vout} into ${satoshis} each`);
         }
@@ -471,7 +472,8 @@ program
         split(bundle.PRIVATE, limit, satoshis).then(function() {
             console.log("FINISHED splitting utxos");
         }).catch(e => {
-            console.log(`ERROR while splitting utxos ${e.message}`);
+            console.log(e);
+            console.log(`ERROR while splitting utxos`);
         });
     });
 
