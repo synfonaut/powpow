@@ -4,54 +4,38 @@ function _interopDefault (ex) { return (ex && (typeof ex === 'object') && 'defau
 
 var qrcode = _interopDefault(require('qrcode-terminal'));
 var program = _interopDefault(require('commander'));
-var RPCClient = _interopDefault(require('bitcoind-rpc'));
 var bsv$1 = _interopDefault(require('bsv'));
 var fs = _interopDefault(require('fs'));
 var path = _interopDefault(require('path'));
-require('bsv-p2p');
-var bitwork = _interopDefault(require('bitwork'));
-require('txo');
 
-let defaultOptions = {
-    rpc: { host: "127.0.0.1", user: "root", pass: "bitcoin" },
-    peer: { host: "127.0.0.1" },
-};
-
-const rpc = {
-    "host": process.env.RPC_HOST,
-    "user": process.env.RPC_USER,
-    "pass": process.env.RPC_PASS,
-};
-
-const peer = {
-    "host": process.env.PEER_HOST
-};
-
-let config = Object.assign({}, defaultOptions, { rpc }, { peer });
-
-const rpcconfig = Object.assign({
-    protocol: "http",
-    host: "127.0.0.1",
-    port: "8332",
-}, config.rpc);
+const log = require("debug")("powpow:send");
+const axios = require('axios');
 
 
 function sendtx(txhash) {
     return new Promise((resolve, reject) => {
-        const rpc = new RPCClient(rpcconfig);
-        rpc.sendRawTransaction(txhash, (err, res) => {
-            if (err) { reject(err); }
-            else { resolve(res); }
+        axios.post('https://api.whatsonchain.com/v1/bsv/main/tx/raw', {
+            txhex: txhash
+        }).then(response => {
+            if (response.status === 200) {
+                resolve(response.data);
+            } else {
+                log(`error while sending txhash ${txhash}, resonse was ${response.status}`);
+                reject(null);
+            }
+        }).catch(e => {
+            log(`error while sending txhash ${txhash}, error ${e.message}`);
+            reject(null);
         });
     });
 }
 
-const log = require("debug")("powpow:utxos");
+const log$1 = require("debug")("powpow:utxos");
 
 const bitindex = require('bitindex-sdk').instance();
 
 async function utxos(address) {
-    log(`fetching utxos for address ${address}`);
+    log$1(`fetching utxos for address ${address}`);
     const utxos = await bitindex.address.getUtxos(address);
     const sorted = utxos.sort((a, b) => {
         if (a.satoshis > b.satoshis) { return 1 }
@@ -63,6 +47,24 @@ async function utxos(address) {
 
 const bitindex$1 = require('bitindex-sdk').instance();
 
+function estimateFeeForScript(script, satoshis=0, feeb=0.6) {
+
+    function getDummyUTXO() {
+        return bsv$1.Transaction.UnspentOutput({
+            address: '19dCWu1pvak7cgw5b1nFQn9LapFSQLqahC',
+            txId: 'e29bc8d6c7298e524756ac116bd3fb5355eec1da94666253c3f40810a4000804',
+            outputIndex: 0,
+            satoshis: 5000000000,
+            scriptPubKey: '21034b2edef6108e596efb2955f796aa807451546025025833e555b6f9b433a4a146ac'
+        })
+    }
+
+    const tempTX = new bsv$1.Transaction().from([getDummyUTXO()]).change("19dCWu1pvak7cgw5b1nFQn9LapFSQLqahC");
+    tempTX.addOutput(new bsv$1.Transaction.Output({script, satoshis }));
+    return Math.ceil(tempTX._estimateSize() * feeb);
+}
+
+
 async function fireForUTXO(privateKey, utxo, changeAddress, satoshis, hash, target) {
     if (!privateKey) { throw new Error(`shooter requires a privateKey`) }
     if (!utxo) { throw new Error(`shooter requires a utxo`) }
@@ -73,12 +75,14 @@ async function fireForUTXO(privateKey, utxo, changeAddress, satoshis, hash, targ
 
     const script = bsv$1.Script.fromASM(`${hash} ${target} OP_SIZE OP_4 OP_PICK OP_SHA256 OP_SWAP OP_SPLIT OP_DROP OP_EQUALVERIFY OP_DROP OP_CHECKSIG`);
 
+    const fee = estimateFeeForScript(script);
+
     const tx = bsv$1.Transaction()
         .from([utxo])
         .change(changeAddress)
         .addOutput(bsv$1.Transaction.Output({
             script: script.toHex(),
-            satoshis: (satoshis - 200), // how much should fee be?
+            satoshis: (satoshis - fee),
         }));
 
     tx.sign(privateKey);
@@ -90,19 +94,17 @@ async function fireForUTXO(privateKey, utxo, changeAddress, satoshis, hash, targ
 
     const txhash = tx.uncheckedSerialize();
 
-    //console.log(txhash);
-    //const result = await bitindex.tx.send(txhash);
-    const result = await sendtx(txhash);
+    const txid = await sendtx(txhash);
 
-    if (result.error) {
+    if (!txid) {
         console.log("error while sending tx for utxo", utxo);
-        throw new Error(`error while sending tx ${result.error}`);
+        throw new Error(`error while sending tx ${txhash}`);
     }
 
-    return result.result;
+    return txid;
 }
 
-async function fire(wif, num, satoshis, hash, target, backend) {
+async function fire(wif, num, satoshis, hash, target) {
     console.log("starting transaction shooter");
     if (!wif) { throw new Error(`shooter requires a wif`) }
     if (!hash) { throw new Error(`shooter requires a hash`) }
@@ -129,23 +131,19 @@ async function fire(wif, num, satoshis, hash, target, backend) {
         const txid = await fireForUTXO(privateKey, utxo, address, satoshis, hash, target);
         if (!txid) { throw new Error(`error firing tx to target`) }
 
-        backend.add(txid);
-
         curr += 1;
-        console.log(`🔫 FIRE ${txid}`);
+        console.log(`💥 FIRE ${txid}`);
 
         if (curr >= num) {
             console.log(`FIRED ${curr}/${num} targets`);
             break;
         }
     }
-
-    backend.wait();
 }
 
 Object.fromEntries = arr => Object.assign({}, ...Array.from(arr, ([k, v]) => ({[k]: v}) ));
 
-const log$1 = require("debug")("powpow:bit");
+const log$2 = require("debug")("powpow:bit");
 
 // fetch and generate new .bit files
 async function generate(file=".bit") {
@@ -193,7 +191,7 @@ async function write(bundle, file=".bit") {
         return `${key.toUpperCase()}=${value}`;
     }).join("\n");
 
-    log$1(`writing ${content.length} bytes to ${file}`);
+    log$2(`writing ${content.length} bytes to ${file}`);
 
     fs.writeFileSync(filepath, content, "utf8");
     return true;
@@ -219,7 +217,7 @@ async function fetch(file=".bit") {
             throw new Error(`error while validating the bundle, the private key doesn't match the address`);
         }
 
-        log$1(`loaded .bit with address ${bundle.ADDRESS}`);
+        log$2(`loaded .bit with address ${bundle.ADDRESS}`);
         return bundle;
     }
 }
@@ -347,110 +345,7 @@ async function split(wif, num, satoshis, maxoutputs=25) {
     }
 }
 
-class Backend {
-    constructor() {
-        this.peer = null;
-        this.txids = {};
-        this.ready = () => {};
-        this.waitInterval = null;
-        this.startTime = Date.now();
-    }
-
-    add(txid) {
-        this.txids[txid] = false;
-    }
-
-    has(txid) {
-        return this.txids[txid] === false;
-    }
-
-    complete(txid) {
-        console.log("💦 HIT", txid);
-        this.txids[txid] = true;
-    }
-
-    finished() {
-        return Object.values(this.txids).every(txid => txid === true);
-    }
-
-    incomplete() {
-        return Object.entries(this.txids).map(([txid, complete]) => {
-            if (!complete) {
-                return txid;
-            }
-        }).filter(txid => txid);
-    }
-
-    num() {
-        return Object.keys(this.txids).length;
-    }
-
-    clear() {
-        clearInterval(this.waitInterval);
-        this.waitInterval = null;
-    }
-
-    reset() {
-        this.clear();
-    }
-
-    wait(max=100) {
-        if (this.waitInterval) {
-            this.clear();
-        }
-
-        let curr = 0;
-        this.waitInterval = setInterval(() => {
-            if (this.finished()) {
-                const diff = (Date.now() - this.startTime) / 1000;
-                console.log(`✅ SUCCESS FIRED AND HIT ${this.num()} txs IN ${diff} SECONDS`);
-                this.reset();
-            } else {
-                console.log("WAIT for finish");
-                for (const txid of this.incomplete()) {
-                    console.log("WAIT ON", txid);
-                }
-            }
-
-            if (++curr > max) {
-                console.log("🔴 ERROR stopped waiting, exceeded max");
-                this.reset();
-            }
-        }, 1000);
-    }
-
-    ready(fn) {
-        this.ready = fn;
-    }
-}
-
-class BitworkBackend extends Backend {
-
-    constructor() {
-        super();
-
-        this.bit = new bitwork({ rpc: config.rpc, peer: config.peer });
-        this.bit.use("parse", "txo");
-        this.bit.on("ready", async () => {
-            this.bit.on("mempool", (e) => {
-                if (this.has(e.tx.h)) {
-                    this.complete(e.tx.h);
-                }
-            });
-
-            this.ready();
-        });
-
-    }
-
-    reset() {
-        this.clear();
-        this.bit.peer.disconnect();
-    }
-
-}
-
-const log$2 = require("debug")("powpow");
+const log$3 = require("debug")("powpow");
 
 const readline = require("readline");
 
@@ -467,7 +362,7 @@ program.on('--help', function(){
 async function balance() {
     let bundle = await fetch();
     if (!bundle) {
-        log$2(`error finding address information, please inspect you .bit file`);
+        log$3(`error finding address information, please inspect you .bit file`);
         return;
     }
 
@@ -485,7 +380,7 @@ async function balance() {
 async function showutxos() {
     let bundle = await fetch();
     if (!bundle) {
-        log$2(`error finding address information, please inspect you .bit file`);
+        log$3(`error finding address information, please inspect you .bit file`);
         return;
     }
 
@@ -506,13 +401,13 @@ async function showutxos() {
 async function address() {
     let bundle = await fetch();
     if (!bundle) {
-        log$2(`error finding address information, please inspect you .bit file`);
+        log$3(`error finding address information, please inspect you .bit file`);
         return;
     }
 
     qrcode.generate(`bitcoin:${bundle.ADDRESS}`, function(message) {
         console.log("\n");
-        console.log("🔫 Pew Pew Transaction Shooter Address");
+        console.log("💥 Pow Pow Transaction Shooter Address");
         console.log("\n");
         console.log(message);
         console.log("\nADDRESS", bundle.ADDRESS);
@@ -528,11 +423,11 @@ program
     .action(async function() {
         let bundle = await fetch();
         if (bundle) {
-            log$2(`already generated address`);
+            log$3(`already generated address`);
         } else {
-            log$2(`generating address`);
+            log$3(`generating address`);
             bundle = await generate();
-            log$2(`generated address ${bundle.ADDRESS}`);
+            log$3(`generated address ${bundle.ADDRESS}`);
             address();
         }
     });
@@ -566,7 +461,7 @@ program
     .action(async function(args) {
         let bundle = await fetch();
         if (!bundle) {
-            log$2(`error finding address information, please inspect you .bit file`);
+            log$3(`error finding address information, please inspect you .bit file`);
             return;
         }
 
@@ -583,11 +478,11 @@ program
 program
     .command("fire <sha256 hash> <target> [number]")
     .option("-s, --satoshis <satoshis>", "Change the number of satoshis to send, by default 1000")
-    .description("Fire Pew Pew, sending num Bitcoin transactions to an address")
+    .description("Fire Pow Pow, sending num Bitcoin transactions to an address")
     .action(async function(hash, target, number, args) {
         let bundle = await fetch();
         if (!bundle) {
-            log$2(`error finding address information, please inspect you .bit file`);
+            log$3(`error finding address information, please inspect you .bit file`);
             return;
         }
 
@@ -620,15 +515,11 @@ program
         prompt.prompt();
         prompt.on("line", async function(line) {
             if (line == "y") {
-                console.log("🔫 FIRE AT WILL");
-                const backend = new BitworkBackend();
-                backend.ready = function() {
-                    console.log("ready");
-                    fire(bundle.PRIVATE, num, satoshis, hash, target, backend).catch(e => {
-                        console.log(`ERROR while firing transactions`);
-                        console.log(e);
-                    });
-                };
+                console.log("💥 FIRING PoW");
+                fire(bundle.PRIVATE, num, satoshis, hash, target).catch(e => {
+                    console.log(`ERROR while firing transactions`);
+                    console.log(e);
+                });
             } else {
                 console.log("\nSkipping... CEASE FIRE\n");
             }

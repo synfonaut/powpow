@@ -11,8 +11,6 @@ import * as bit from "./bit"
 import * as utxos from "./utxos"
 import * as split from "./split"
 
-import { B2P2PBackend, BitworkBackend } from "./backends"
-
 program.on('--help', function(){
   console.log('')
   console.log('Usage:');
@@ -71,7 +69,7 @@ async function address() {
 
     qrcode.generate(`bitcoin:${bundle.ADDRESS}`, function(message) {
         console.log("\n");
-        console.log("🔫 Pew Pew Transaction Shooter Address");
+        console.log("💥 Pow Pow Transaction Shooter Address");
         console.log("\n");
         console.log(message);
         console.log("\nADDRESS", bundle.ADDRESS);
@@ -142,7 +140,7 @@ program
 program
     .command("fire <sha256 hash> <target> [number]")
     .option("-s, --satoshis <satoshis>", "Change the number of satoshis to send, by default 1000")
-    .description("Fire Pew Pew, sending num Bitcoin transactions to an address")
+    .description("Fire Pow Pow, sending num Bitcoin transactions to an address")
     .action(async function(hash, target, number, args) {
         let bundle = await bit.fetch();
         if (!bundle) {
@@ -179,15 +177,11 @@ program
         prompt.prompt();
         prompt.on("line", async function(line) {
             if (line == "y") {
-                console.log("🔫 FIRE AT WILL");
-                const backend = new BitworkBackend();
-                backend.ready = function() {
-                    console.log("ready");
-                    fire(bundle.PRIVATE, num, satoshis, hash, target, backend).catch(e => {
-                        console.log(`ERROR while firing transactions`);
-                        console.log(e);
-                    });
-                };
+                console.log("💥 FIRING PoW");
+                fire(bundle.PRIVATE, num, satoshis, hash, target).catch(e => {
+                    console.log(`ERROR while firing transactions`);
+                    console.log(e);
+                });
             } else {
                 console.log("\nSkipping... CEASE FIRE\n");
             }

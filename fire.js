@@ -1,9 +1,26 @@
-import config from "./config"
 import { sendtx } from "./send"
 import { utxos as getutxos } from "./utxos"
 
 import bsv from "bsv";
 const bitindex = require('bitindex-sdk').instance();
+
+function estimateFeeForScript(script, satoshis=0, feeb=0.6) {
+
+    function getDummyUTXO() {
+        return bsv.Transaction.UnspentOutput({
+            address: '19dCWu1pvak7cgw5b1nFQn9LapFSQLqahC',
+            txId: 'e29bc8d6c7298e524756ac116bd3fb5355eec1da94666253c3f40810a4000804',
+            outputIndex: 0,
+            satoshis: 5000000000,
+            scriptPubKey: '21034b2edef6108e596efb2955f796aa807451546025025833e555b6f9b433a4a146ac'
+        })
+    }
+
+    const tempTX = new bsv.Transaction().from([getDummyUTXO()]).change("19dCWu1pvak7cgw5b1nFQn9LapFSQLqahC");
+    tempTX.addOutput(new bsv.Transaction.Output({script, satoshis }));
+    return Math.ceil(tempTX._estimateSize() * feeb);
+}
+
 
 async function fireForUTXO(privateKey, utxo, changeAddress, satoshis, hash, target) {
     if (!privateKey) { throw new Error(`shooter requires a privateKey`) }
@@ -15,12 +32,14 @@ async function fireForUTXO(privateKey, utxo, changeAddress, satoshis, hash, targ
 
     const script = bsv.Script.fromASM(`${hash} ${target} OP_SIZE OP_4 OP_PICK OP_SHA256 OP_SWAP OP_SPLIT OP_DROP OP_EQUALVERIFY OP_DROP OP_CHECKSIG`);
 
+    const fee = estimateFeeForScript(script);
+
     const tx = bsv.Transaction()
         .from([utxo])
         .change(changeAddress)
         .addOutput(bsv.Transaction.Output({
             script: script.toHex(),
-            satoshis: (satoshis - 200), // how much should fee be?
+            satoshis: (satoshis - fee),
         }));
 
     tx.sign(privateKey);
@@ -32,19 +51,17 @@ async function fireForUTXO(privateKey, utxo, changeAddress, satoshis, hash, targ
 
     const txhash = tx.uncheckedSerialize();
 
-    //console.log(txhash);
-    //const result = await bitindex.tx.send(txhash);
-    const result = await sendtx(txhash);
+    const txid = await sendtx(txhash);
 
-    if (result.error) {
+    if (!txid) {
         console.log("error while sending tx for utxo", utxo);
-        throw new Error(`error while sending tx ${result.error}`);
+        throw new Error(`error while sending tx ${txhash}`);
     }
 
-    return result.result;
+    return txid;
 }
 
-export async function fire(wif, num, satoshis, hash, target, backend) {
+export async function fire(wif, num, satoshis, hash, target) {
     console.log("starting transaction shooter");
     if (!wif) { throw new Error(`shooter requires a wif`) }
     if (!hash) { throw new Error(`shooter requires a hash`) }
@@ -71,17 +88,13 @@ export async function fire(wif, num, satoshis, hash, target, backend) {
         const txid = await fireForUTXO(privateKey, utxo, address, satoshis, hash, target);
         if (!txid) { throw new Error(`error firing tx to target`) }
 
-        backend.add(txid);
-
         curr += 1;
-        console.log(`🔫 FIRE ${txid}`);
+        console.log(`💥 FIRE ${txid}`);
 
         if (curr >= num) {
             console.log(`FIRED ${curr}/${num} targets`);
             break;
         }
     }
-
-    backend.wait();
 }
 

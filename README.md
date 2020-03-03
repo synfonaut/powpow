@@ -71,7 +71,7 @@ Your private key is generated on a .bit file in your local directory. If you put
 
 Use the environment variables below to change the node information
 
-    RPC_HOST=127.0.0.1 RPC_USER=root RPC_PASS=bitcoin PEER_HOST=127.0.0.1 powpow fire 21e80096c21e2de52d741ac27607e251770c0b9f7e644f684cf37173e871820e 21e8
+    powpow fire 21e80096c21e2de52d741ac27607e251770c0b9f7e644f684cf37173e871820e 21e8
 
 ### How do I change the number of transactions I'm sending?
 
@@ -93,5 +93,7 @@ Probably because the fee is too low, try sending a lower satoshi amount.
 
 ## Author
 
-Created by [@synfonaut](https://twitter.com/synfonaut) while building [Bit.sv](https://bit.sv) and [pow.market](https://pow.market).
+Created by @synfonaut
+
+Inspired by @C0inAlchemist and #21e8
 

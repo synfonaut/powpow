@@ -1,20 +1,21 @@
-import config from "./config"
-
-import RPCClient from "bitcoind-rpc"
-
-const rpcconfig = Object.assign({
-    protocol: "http",
-    host: "127.0.0.1",
-    port: "8332",
-}, config.rpc);
+const log = require("debug")("powpow:send");
+const axios = require('axios')
 
 
 export function sendtx(txhash) {
     return new Promise((resolve, reject) => {
-        const rpc = new RPCClient(rpcconfig)
-        rpc.sendRawTransaction(txhash, (err, res) => {
-            if (err) { reject(err) }
-            else { resolve(res) }
+        axios.post('https://api.whatsonchain.com/v1/bsv/main/tx/raw', {
+            txhex: txhash
+        }).then(response => {
+            if (response.status === 200) {
+                resolve(response.data);
+            } else {
+                log(`error while sending txhash ${txhash}, resonse was ${response.status}`);
+                reject(null);
+            }
+        }).catch(e => {
+            log(`error while sending txhash ${txhash}, error ${e.message}`);
+            reject(null);
         });
     });
 }
