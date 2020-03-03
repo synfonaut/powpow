@@ -1,13 +1,13 @@
 {
   "name": "powpow-bitcoin",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "A Bitcoin proof-of-work transaction shooter",
   "main": "index.js",
   "bin": {
     "powpow": "./powpow"
   },
   "scripts": {
-    "build": "./node_modules/.bin/rollup cli.js --file bundle.js --format cjs && chmod +x bundle.js"
+    "build": "./node_modules/.bin/rollup cli.js --file bundle.js --format cjs"
   },
   "keywords": [
     "bsv",
