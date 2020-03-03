@@ -2,4 +2,4 @@
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
-node "$DIR/../lib/node_modules/powpow-bitcoin/bundle.js"
+node "$DIR/../lib/node_modules/powpow-bitcoin/bundle.js" $@
