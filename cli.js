@@ -19,7 +19,7 @@ program.on('--help', function(){
   console.log('  $ powpow generate');
   console.log('  $ powpow address');
   console.log('  $ powpow split');
-  console.log('  $ powpow fire 1Jpgfg9fFNKVVGxYgUhuKhdbxTSKBUnVf4');
+  console.log('  $ powpow fire 21e80096c21e2de52d741ac27607e251770c0b9f7e644f684cf37173e871820e 21e8');
   console.log('')
 });
 
