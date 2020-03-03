@@ -582,7 +582,7 @@ program
 
 program
     .command("fire <sha256 hash> <target> [number]")
-    .option("-s, --satoshis <satoshis>", "Change the number of satoshis to send, by default 800")
+    .option("-s, --satoshis <satoshis>", "Change the number of satoshis to send, by default 1000")
     .description("Fire Pew Pew, sending num Bitcoin transactions to an address")
     .action(async function(hash, target, number, args) {
         let bundle = await fetch();
@@ -591,7 +591,7 @@ program
             return;
         }
 
-        const satoshis = (args.satoshis ? Number(args.satoshis) : 800);
+        const satoshis = (args.satoshis ? Number(args.satoshis) : 1000);
         console.log("HASH", hash, hash.length);
         if (!hash || hash.length !== 64) {
             console.log(`ERROR invalid hash ${hash}`);
