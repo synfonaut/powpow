@@ -4,8 +4,6 @@ Pow Pow is a Bitcoin proof-of-work shooter, it quickly sends a lot of proof-of-w
 
 It's useful for stress testing and debugging realtime Bitcoin proof-of-work applications.
 
-Pow Pow currently requires a Bitcoin node.
-
 ## Install
 
     npm install -g powpow-bitcoin
