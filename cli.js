@@ -133,7 +133,8 @@ program
         split.split(bundle.PRIVATE, limit, satoshis).then(function() {
             console.log("FINISHED splitting utxos");
         }).catch(e => {
-            console.log(`ERROR while splitting utxos ${e.message}`);
+            console.log(e);
+            console.log(`ERROR while splitting utxos`);
         });
     });
 
