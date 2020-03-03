@@ -1,6 +1,6 @@
 {
   "name": "powpow-bitcoin",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "A Bitcoin proof-of-work transaction shooter",
   "main": "index.js",
   "bin": {
