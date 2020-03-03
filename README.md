@@ -58,7 +58,7 @@ Split large utxos into many smaller utxos
       $ powpow generate
       $ powpow address
       $ powpow split
-      $ powpow fire 1Jpgfg9fFNKVVGxYgUhuKhdbxTSKBUnVf4
+      $ powpow fire 21e80096c21e2de52d741ac27607e251770c0b9f7e644f684cf37173e871820e 21e8
 
 
 ## Frequently Asked Questions
