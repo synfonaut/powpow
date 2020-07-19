@@ -28,7 +28,7 @@
     "commander": "4.0.1",
     "debug": "4.1.1",
     "esm": "3.2.25",
-    "lodash": "4.17.15",
+    "lodash": "4.17.19",
     "qrcode-terminal": "0.12.0"
   },
   "devDependencies": {
